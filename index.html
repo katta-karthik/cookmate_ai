@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CookMate AI - Intelligent Cooking Assistant</title>
+
+    <!-- Preconnect to CDNs for faster loading -->
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
+
+    <!-- Critical CSS inline for faster first paint -->
+    <style>
+        .hidden {
+            display: none !important;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        #loadingScreen {
+            position: fixed;
+            inset: 0;
+            background: #0f172a;
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+
+    <!-- Stylesheets -->
+    <link rel="stylesheet" href="assets/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <!-- Tailwind (load first, small) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+    <!-- AI libraries - Qwen-VL is cloud/colab based, so we remove heavy local models -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js" defer></script>
+</head>
+
+<body class="bg-slate-900 text-white min-h-screen">
+
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="loading-chef text-8xl mb-6">👨‍🍳</div>
+            <h1 class="text-3xl font-bold mb-2">CookMate AI</h1>
+            <p class="text-slate-400 mb-6">Preparing your kitchen assistant...</p>
+            <div class="flex items-center justify-center gap-2">
+                <div class="loading-dot w-3 h-3 bg-orange-500 rounded-full"></div>
+                <div class="loading-dot w-3 h-3 bg-orange-500 rounded-full" style="animation-delay: 0.2s"></div>
+                <div class="loading-dot w-3 h-3 bg-orange-500 rounded-full" style="animation-delay: 0.4s"></div>
+            </div>
+            <p id="loadingStatus" class="text-sm text-slate-500 mt-4">Loading AI models...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="bg-slate-800/80 backdrop-blur-lg border-b border-slate-700 px-4 md:px-6 py-3 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div
+                    class="w-10 h-10 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <span class="text-xl">🍳</span>
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold">CookMate AI</h1>
+                    <p class="text-xs text-slate-400 hidden md:block">Vision-Based Cooking Assistant</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 md:gap-4">
+                <!-- Model Status -->
+                <div id="modelStatus"
+                    class="hidden md:flex items-center gap-2 px-3 py-1.5 bg-yellow-500/20 text-yellow-400 rounded-full text-sm">
+                    <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
+                    <span>Loading...</span>
+                </div>
+
+                <!-- Stats Button -->
+                <button onclick="CookMate.UI.toggleStats()"
+                    class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition" title="Statistics">
+                    <span>📊</span>
+                </button>
+
+                <!-- Voice Toggle -->
+                <button onclick="CookMate.Voice.toggle()" id="voiceBtn"
+                    class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition" title="Toggle Voice">
+                    <span id="voiceIcon">🔊</span>
+                </button>
+
+                <!-- Settings -->
+                <button onclick="CookMate.UI.toggleSettings()"
+                    class="p-2 bg-slate-700 hover:bg-slate-600 rounded-lg transition" title="Settings">
+                    <span>⚙️</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Application -->
+    <main class="max-w-7xl mx-auto p-4 md:p-6">
+        <div class="grid lg:grid-cols-3 gap-4 md:gap-6">
+
+            <!-- Left Column: Camera & Detection -->
+            <div class="lg:col-span-2 space-y-4 md:space-y-6">
+
+                <!-- Camera View -->
+                <section id="cameraSection" class="bg-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                    <div class="p-3 md:p-4 border-b border-slate-700 flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <span id="cameraStatus" class="w-3 h-3 bg-slate-500 rounded-full"></span>
+                            <h2 class="font-semibold text-sm md:text-base">Kitchen Vision</h2>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <!-- Image Upload Hidden Input -->
+                            <input type="file" id="imageUpload" accept="image/*" class="hidden"
+                                onchange="CookMate.Camera.handleUpload(event)">
+
+                            <button onclick="document.getElementById('imageUpload').click()"
+                                class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-medium transition">
+                                📁 Upload Image
+                            </button>
+
+                            <button onclick="CookMate.Camera.toggle()" id="cameraBtn"
+                                class="px-3 md:px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-xs md:text-sm font-medium transition">
+                                Start Camera
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="cameraContainer" class="video-container bg-slate-900 aspect-video relative">
+                        <video id="webcam" autoplay playsinline muted class="w-full h-full object-cover"></video>
+                        <canvas id="detectionCanvas"
+                            class="absolute top-0 left-0 w-full h-full pointer-events-none"></canvas>
+
+                        <!-- Image Preview (Hidden by default) -->
+                        <div id="imagePreviewContainer" class="absolute inset-0 bg-slate-900 hidden z-20">
+                            <img id="capturedImagePreview" class="w-full h-full object-contain">
+                            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3">
+                                <button onclick="CookMate.Camera.resetPreview()"
+                                    class="px-6 py-2 bg-slate-700 hover:bg-slate-600 rounded-full text-sm font-medium transition shadow-lg">
+                                    Cancel
+                                </button>
+                                <button id="detectBtn" onclick="CookMate.Camera.runDetection()"
+                                    class="px-8 py-2 bg-orange-600 hover:bg-orange-500 rounded-full text-sm font-bold transition shadow-lg flex items-center gap-2">
+                                    <span>🔍</span> Detect Ingredients
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Capture Button Overlay (Visible only when camera active) -->
+                        <div id="captureControls" class="absolute bottom-6 left-1/2 -translate-x-1/2 hidden z-10">
+                            <button onclick="CookMate.Camera.capture()"
+                                class="w-16 h-16 bg-white/20 hover:bg-white/40 border-4 border-white rounded-full flex items-center justify-center transition-all p-1 active:scale-95 shadow-2xl">
+                                <div class="w-full h-full bg-white rounded-full"></div>
+                            </button>
+                        </div>
+
+                        <!-- Camera Placeholder -->
+                        <div id="cameraPlaceholder"
+                            class="absolute inset-0 flex flex-col items-center justify-center text-slate-500 bg-slate-900">
+                            <div class="camera-icon text-6xl md:text-7xl mb-4">📷</div>
+                            <p class="text-base md:text-lg font-medium">Ready to see your ingredients?</p>
+                            <p class="text-xs md:text-sm mt-2 text-slate-600">Start camera or upload a photo to identify
+                                items</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Detected Ingredients -->
+                <section class="bg-slate-800 rounded-2xl p-4 md:p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="font-semibold text-base md:text-lg flex items-center gap-2">
+                            <span>🥬</span> Detected Ingredients
+                            <span id="ingredientCount" class="text-xs px-2 py-0.5 bg-slate-700 rounded-full">0</span>
+                        </h2>
+                        <button onclick="CookMate.Ingredients.clear()"
+                            class="text-xs md:text-sm text-slate-400 hover:text-white transition">
+                            Clear All
+                        </button>
+                    </div>
+
+                    <div id="ingredientsList" class="flex flex-wrap gap-2 min-h-[50px]">
+                        <div class="text-slate-500 text-sm">Point your camera at ingredients...</div>
+                    </div>
+
+                    <!-- Manual Input -->
+                    <div class="mt-4 pt-4 border-t border-slate-700">
+                        <div class="flex gap-2 mb-3">
+                            <input type="text" id="manualIngredient" placeholder="Add ingredient manually..."
+                                class="flex-1 px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-sm focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500">
+                            <button onclick="CookMate.Ingredients.addManual()"
+                                class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg text-sm font-medium transition">
+                                Add
+                            </button>
+                        </div>
+
+                        <!-- Quick Add Buttons -->
+                        <div class="flex flex-wrap gap-2">
+                            <span class="text-xs text-slate-500 self-center">Quick:</span>
+                            <button onclick="CookMate.Ingredients.quickAdd('Tomato')" class="quick-add-btn">🍅
+                                Tomato</button>
+                            <button onclick="CookMate.Ingredients.quickAdd('Onion')" class="quick-add-btn">🧅
+                                Onion</button>
+                            <button onclick="CookMate.Ingredients.quickAdd('Potato')" class="quick-add-btn">🥔
+                                Potato</button>
+                            <button onclick="CookMate.Ingredients.quickAdd('Carrot')" class="quick-add-btn">🥕
+                                Carrot</button>
+                            <button onclick="CookMate.Ingredients.quickAdd('Egg')" class="quick-add-btn">🥚 Egg</button>
+                            <button onclick="CookMate.Ingredients.quickAdd('Chicken')" class="quick-add-btn">🍗
+                                Chicken</button>
+                            <button onclick="CookMate.Ingredients.quickAdd('Rice')" class="quick-add-btn">🍚
+                                Rice</button>
+                            <button onclick="CookMate.Ingredients.quickAdd('Garlic')" class="quick-add-btn">🧄
+                                Garlic</button>
+                            <button onclick="CookMate.Ingredients.quickAdd('Ginger')" class="quick-add-btn">🫚
+                                Ginger</button>
+                            <button onclick="CookMate.Ingredients.quickAdd('Paneer')" class="quick-add-btn">🧀
+                                Paneer</button>
+                            <button onclick="CookMate.Ingredients.quickAdd('Mushroom')" class="quick-add-btn">🍄
+                                Mushroom</button>
+                            <button onclick="CookMate.Ingredients.quickAdd('Spinach')" class="quick-add-btn">🥬
+                                Spinach</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Recipe Filters & List -->
+                <section class="bg-slate-800 rounded-2xl p-4 md:p-6 shadow-xl">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-4">
+                        <h2 class="font-semibold text-base md:text-lg flex items-center gap-2">
+                            <span>📖</span> Recipe Recommendations
+                        </h2>
+
+                        <!-- Filters -->
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="CookMate.Recipes.filter('all')" class="filter-btn active"
+                                data-filter="all">All</button>
+                            <button onclick="CookMate.Recipes.filter('quick')" class="filter-btn" data-filter="quick">⚡
+                                Quick</button>
+                            <button onclick="CookMate.Recipes.filter('vegan')" class="filter-btn" data-filter="vegan">🌱
+                                Vegan</button>
+                            <button onclick="CookMate.Recipes.filter('indian')" class="filter-btn"
+                                data-filter="indian">🇮🇳 Indian</button>
+                            <button onclick="CookMate.Recipes.filter('chinese')" class="filter-btn"
+                                data-filter="chinese">🥡 Chinese</button>
+                        </div>
+                    </div>
+
+                    <!-- Search -->
+                    <div class="mb-4">
+                        <input type="text" id="recipeSearch" placeholder="Search recipes..."
+                            oninput="CookMate.Recipes.search(this.value)"
+                            class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <!-- Recipe Grid -->
+                    <div id="recipeList" class="grid md:grid-cols-2 gap-3 md:gap-4 max-h-[500px] overflow-y-auto pr-2">
+                        <div class="text-slate-500 text-sm col-span-2 text-center py-8">
+                            Add ingredients to see matching recipes...
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Right Column: Cooking Assistant -->
+            <div class="space-y-4 md:space-y-6">
+
+                <!-- Cooking Mode Panel -->
+                <section id="cookingPanel" class="bg-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                    <div class="p-4 bg-gradient-to-r from-orange-600 to-red-600">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="font-bold text-lg">👨‍🍳 Cooking Assistant</h2>
+                                <p id="currentRecipeName" class="text-sm text-orange-100">Select a recipe to start</p>
+                            </div>
+                            <button id="fullscreenBtn" onclick="CookMate.UI.toggleFullscreen()"
+                                class="p-2 bg-white/20 hover:bg-white/30 rounded-lg transition hidden">
+                                ⛶
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="p-4 space-y-4">
+                        <!-- Progress Bar -->
+                        <div id="progressSection" class="hidden">
+                            <div class="flex items-center justify-between text-sm mb-2">
+                                <span class="text-slate-400">Progress</span>
+                                <span id="progressText" class="text-indigo-400">Step 0/0</span>
+                            </div>
+                            <div class="h-2 bg-slate-700 rounded-full overflow-hidden">
+                                <div id="progressBar"
+                                    class="h-full bg-gradient-to-r from-indigo-500 to-purple-500 transition-all duration-500"
+                                    style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <!-- Timer Section -->
+                        <div id="timerSection" class="hidden">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="text-sm text-slate-400">⏱️ Step Timer</span>
+                                <button onclick="CookMate.Timer.reset()"
+                                    class="text-xs text-slate-400 hover:text-white">Reset</button>
+                            </div>
+                            <div id="timerDisplay"
+                                class="text-4xl md:text-5xl font-bold text-center py-4 bg-slate-900 rounded-xl font-mono">
+                                00:00
+                            </div>
+                            <div class="flex gap-2 mt-3">
+                                <button onclick="CookMate.Timer.start()" id="timerStartBtn"
+                                    class="flex-1 py-2 bg-green-600 hover:bg-green-500 rounded-lg text-sm font-medium transition">
+                                    ▶ Start
+                                </button>
+                                <button onclick="CookMate.Timer.pause()" id="timerPauseBtn"
+                                    class="flex-1 py-2 bg-yellow-600 hover:bg-yellow-500 rounded-lg text-sm font-medium transition hidden">
+                                    ⏸ Pause
+                                </button>
+                                <button onclick="CookMate.Timer.addTime(30)"
+                                    class="px-3 py-2 bg-slate-600 hover:bg-slate-500 rounded-lg text-sm transition">
+                                    +30s
+                                </button>
+                            </div>
+                            <!-- Quick Timers -->
+                            <div class="flex gap-2 mt-2">
+                                <button onclick="CookMate.Timer.setQuick(1)"
+                                    class="flex-1 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs transition">1
+                                    min</button>
+                                <button onclick="CookMate.Timer.setQuick(3)"
+                                    class="flex-1 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs transition">3
+                                    min</button>
+                                <button onclick="CookMate.Timer.setQuick(5)"
+                                    class="flex-1 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs transition">5
+                                    min</button>
+                                <button onclick="CookMate.Timer.setQuick(10)"
+                                    class="flex-1 py-1.5 bg-slate-700 hover:bg-slate-600 rounded text-xs transition">10
+                                    min</button>
+                            </div>
+                        </div>
+
+                        <!-- Cooking Stage Detection -->
+                        <div id="cookingStageSection" class="hidden">
+                            <h3 class="text-sm text-slate-400 mb-3">🔥 Cooking Stage</h3>
+                            <div class="grid grid-cols-4 gap-2">
+                                <div id="stage-raw" class="cooking-stage">
+                                    <div class="text-lg">🥩</div>
+                                    <div class="text-xs mt-1">Raw</div>
+                                </div>
+                                <div id="stage-cooking" class="cooking-stage">
+                                    <div class="text-lg">🍳</div>
+                                    <div class="text-xs mt-1">Cooking</div>
+                                </div>
+                                <div id="stage-done" class="cooking-stage">
+                                    <div class="text-lg">✅</div>
+                                    <div class="text-xs mt-1">Done</div>
+                                </div>
+                                <div id="stage-burnt" class="cooking-stage">
+                                    <div class="text-lg">🔥</div>
+                                    <div class="text-xs mt-1">Burnt!</div>
+                                </div>
+                            </div>
+                            <div id="stageWarning"
+                                class="mt-3 p-3 bg-red-500/20 border border-red-500/50 rounded-lg hidden">
+                                <p class="text-sm text-red-400 flex items-center gap-2">
+                                    <span class="animate-pulse">⚠️</span>
+                                    Warning: Food may be burning!
+                                </p>
+                            </div>
+                        </div>
+
+                        <!-- Recipe Steps -->
+                        <div id="recipeSteps" class="space-y-2 max-h-[300px] overflow-y-auto">
+                            <div class="text-slate-500 text-sm text-center py-8">
+                                <span class="text-4xl block mb-2">🍽️</span>
+                                Select a recipe to see cooking steps
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Voice Assistant -->
+                <section class="bg-slate-800 rounded-2xl p-4 shadow-xl">
+                    <div class="flex items-center gap-3">
+                        <div id="voiceIndicator"
+                            class="w-12 h-12 bg-slate-700 rounded-full flex items-center justify-center transition-all">
+                            <span class="text-2xl">🎤</span>
+                        </div>
+                        <div class="flex-1">
+                            <h3 class="font-medium">Voice Assistant</h3>
+                            <p id="lastSpoken" class="text-sm text-slate-400 truncate">Say "Hey Chef" to activate...</p>
+                        </div>
+                        <button onclick="CookMate.Voice.listen()" id="micBtn"
+                            class="p-2 bg-indigo-600 hover:bg-indigo-500 rounded-lg transition">
+                            🎙️
+                        </button>
+                    </div>
+
+                    <!-- Voice Commands Help -->
+                    <div class="mt-3 pt-3 border-t border-slate-700">
+                        <p class="text-xs text-slate-500 mb-2">Voice Commands:</p>
+                        <div class="flex flex-wrap gap-1">
+                            <span class="text-xs px-2 py-1 bg-slate-700 rounded">"Next step"</span>
+                            <span class="text-xs px-2 py-1 bg-slate-700 rounded">"Start timer"</span>
+                            <span class="text-xs px-2 py-1 bg-slate-700 rounded">"Repeat"</span>
+                            <span class="text-xs px-2 py-1 bg-slate-700 rounded">"What's next?"</span>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Quick Actions -->
+                <section class="bg-slate-800 rounded-2xl p-4 shadow-xl">
+                    <h3 class="font-medium mb-3">⚡ Quick Actions</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="CookMate.Actions.stir()" class="action-btn">🥄 Stir Reminder</button>
+                        <button onclick="CookMate.Actions.flip()" class="action-btn">🔄 Flip Food</button>
+                        <button onclick="CookMate.Actions.check()" class="action-btn">🔍 Check Food</button>
+                        <button onclick="CookMate.Actions.taste()" class="action-btn">👅 Taste Test</button>
+                        <button onclick="CookMate.Actions.reduce()" class="action-btn">🔥 Reduce Heat</button>
+                        <button onclick="CookMate.Actions.cover()" class="action-btn">🍲 Cover Pan</button>
+                    </div>
+                </section>
+
+                <!-- Shopping List -->
+                <section id="shoppingSection" class="bg-slate-800 rounded-2xl p-4 shadow-xl hidden">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-medium">🛒 Shopping List</h3>
+                        <button onclick="CookMate.Shopping.clear()"
+                            class="text-xs text-slate-400 hover:text-white">Clear</button>
+                    </div>
+                    <div id="shoppingList" class="space-y-2 max-h-[200px] overflow-y-auto"></div>
+                    <button onclick="CookMate.Shopping.copy()"
+                        class="w-full mt-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm transition">
+                        📋 Copy List
+                    </button>
+                </section>
+            </div>
+        </div>
+    </main>
+
+    <!-- Statistics Modal -->
+    <div id="statsModal" class="modal-overlay hidden">
+        <div class="modal-content bg-slate-800 rounded-2xl p-6 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold">📊 Cooking Statistics</h2>
+                <button onclick="CookMate.UI.toggleStats()"
+                    class="text-slate-400 hover:text-white text-2xl">&times;</button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-slate-700 rounded-xl p-4 text-center">
+                    <p id="statMeals" class="text-3xl font-bold text-orange-400">0</p>
+                    <p class="text-sm text-slate-400">Meals Cooked</p>
+                </div>
+                <div class="bg-slate-700 rounded-xl p-4 text-center">
+                    <p id="statTime" class="text-3xl font-bold text-indigo-400">0h</p>
+                    <p class="text-sm text-slate-400">Time Cooking</p>
+                </div>
+                <div class="bg-slate-700 rounded-xl p-4 text-center">
+                    <p id="statRecipes" class="text-3xl font-bold text-green-400">0</p>
+                    <p class="text-sm text-slate-400">Recipes Tried</p>
+                </div>
+                <div class="bg-slate-700 rounded-xl p-4 text-center">
+                    <p id="statStreak" class="text-3xl font-bold text-purple-400">0</p>
+                    <p class="text-sm text-slate-400">Day Streak</p>
+                </div>
+            </div>
+
+            <!-- Achievements -->
+            <h3 class="font-medium mb-3">🏆 Achievements</h3>
+            <div id="achievements" class="flex flex-wrap gap-2">
+                <span class="achievement locked">🥉 First Meal</span>
+                <span class="achievement locked">🥈 5 Recipes</span>
+                <span class="achievement locked">🥇 Master Chef</span>
+                <span class="achievement locked">🔥 Week Streak</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal-overlay hidden">
+        <div class="modal-content bg-slate-800 rounded-2xl p-6 max-w-md w-full mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-bold">⚙️ Settings</h2>
+                <button onclick="CookMate.UI.toggleSettings()"
+                    class="text-slate-400 hover:text-white text-2xl">&times;</button>
+            </div>
+
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Voice Assistant</p>
+                        <p class="text-sm text-slate-400">Enable voice guidance</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="settingVoice" checked
+                            onchange="CookMate.Settings.update('voice', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Sound Effects</p>
+                        <p class="text-sm text-slate-400">Timer alerts and notifications</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="settingSounds" checked
+                            onchange="CookMate.Settings.update('sounds', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Auto-detect Stage</p>
+                        <p class="text-sm text-slate-400">Analyze cooking color changes</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="settingAutoStage" checked
+                            onchange="CookMate.Settings.update('autoStage', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="font-medium">Gesture Controls</p>
+                        <p class="text-sm text-slate-400">Wave to control steps</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="settingGestures"
+                            onchange="CookMate.Settings.update('gestures', this.checked)">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+
+                <div>
+                    <p class="font-medium mb-2">Voice Speed</p>
+                    <input type="range" id="settingVoiceSpeed" min="0.5" max="1.5" step="0.1" value="0.9" class="w-full"
+                        onchange="CookMate.Settings.update('voiceSpeed', this.value)">
+                </div>
+
+                <div>
+                    <p class="font-medium mb-2">AI Connection URL (Ngrok)</p>
+                    <input type="text" id="settingApiUrl" placeholder="https://xxxx.ngrok-free.app"
+                        class="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-sm focus:outline-none focus:border-indigo-500"
+                        onchange="CookMate.Detection.setApiUrl(this.value)">
+                    <p class="text-[10px] text-slate-500 mt-1">Paste your Ngrok URL from the Colab notebook here.</p>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-slate-700">
+                <button onclick="CookMate.Storage.clearAll()"
+                    class="w-full py-2 bg-red-600/20 text-red-400 hover:bg-red-600/30 rounded-lg text-sm transition">
+                    🗑️ Clear All Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Speaking Overlay -->
+    <div id="speakingOverlay"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-indigo-600 px-6 py-3 rounded-full shadow-lg z-50 hidden">
+        <div class="flex items-center gap-3">
+            <div class="flex gap-1">
+                <div class="w-1 h-4 bg-white rounded animate-pulse"></div>
+                <div class="w-1 h-6 bg-white rounded animate-pulse" style="animation-delay: 0.1s"></div>
+                <div class="w-1 h-4 bg-white rounded animate-pulse" style="animation-delay: 0.2s"></div>
+            </div>
+            <span id="speakingText" class="text-sm font-medium max-w-xs truncate">Speaking...</span>
+        </div>
+    </div>
+
+    <!-- Listening Overlay -->
+    <div id="listeningOverlay"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-green-600 px-6 py-3 rounded-full shadow-lg z-50 hidden">
+        <div class="flex items-center gap-3">
+            <div class="w-4 h-4 bg-white rounded-full animate-ping"></div>
+            <span class="text-sm font-medium">Listening...</span>
+        </div>
+    </div>
+
+    <!-- Scripts (Modular) -->
+    <script src="src/config.js"></script>
+    <script src="src/data/recipes.js"></script>
+    <script src="src/features/storage.js"></script>
+    <script src="src/features/ui.js"></script>
+    <script src="src/features/voice.js"></script>
+    <script src="src/features/timer.js"></script>
+    <script src="src/features/camera.js"></script>
+    <script src="src/features/cooking.js"></script>
+
+    <!-- AI Modules -->
+    <script src="src/ai/config.js"></script>
+    <script src="src/ai/loader.js"></script>
+    <script src="src/ai/detection.js"></script>
+    <script src="src/ai/analyzer.js"></script>
+
+    <!-- Main Application -->
+    <script src="src/app.js"></script>
+
+    <!-- Instant hide - doesn't wait for anything -->
+    <script>
+        requestAnimationFrame(() => {
+            const ls = document.getElementById('loadingScreen');
+            if (ls) { ls.style.opacity = '0'; setTimeout(() => ls.remove(), 150); }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,669 @@
+/* ============================================
+   COOKMATE AI - STYLES
+   ============================================ */
+
+/* Base Styles */
+* {
+    box-sizing: border-box;
+}
+
+/* Hidden utility class - ensure it works */
+.hidden {
+    display: none !important;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.5);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(99, 102, 241, 0.7);
+}
+
+/* ============================================
+   LOADING SCREEN
+   ============================================ */
+
+#loadingScreen {
+    transition: opacity 0.15s ease-out;
+}
+
+.loading-chef {
+    animation: bounce 0.8s ease-in-out infinite;
+    will-change: transform;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+}
+
+.loading-dot {
+    animation: loadingDot 1s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+@keyframes loadingDot {
+    0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+    40% { transform: scale(1); opacity: 1; }
+}
+
+/* ============================================
+   CAMERA & DETECTION
+   ============================================ */
+
+.video-container {
+    position: relative;
+    overflow: hidden;
+}
+
+.camera-icon {
+    animation: cameraFloat 3s ease-in-out infinite;
+}
+
+@keyframes cameraFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(5deg); }
+}
+
+.detection-box {
+    position: absolute;
+    border: 3px solid #10b981;
+    background: rgba(16, 185, 129, 0.1);
+    pointer-events: none;
+    animation: detectPulse 0.3s ease-out;
+}
+
+@keyframes detectPulse {
+    0% { transform: scale(1.1); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.detection-label {
+    position: absolute;
+    top: -28px;
+    left: -3px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    padding: 4px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 6px 6px 0 0;
+    white-space: nowrap;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.3);
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.quick-add-btn {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.625rem;
+    background: rgba(51, 65, 85, 0.8);
+    border-radius: 0.375rem;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.quick-add-btn:hover {
+    background: rgba(71, 85, 105, 0.9);
+    border-color: rgba(99, 102, 241, 0.5);
+    transform: translateY(-1px);
+}
+
+.filter-btn {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    background: rgba(51, 65, 85, 0.8);
+    border-radius: 9999px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.filter-btn:hover {
+    background: rgba(71, 85, 105, 0.9);
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+.action-btn {
+    padding: 0.75rem;
+    background: rgba(51, 65, 85, 0.8);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.action-btn:hover {
+    background: rgba(71, 85, 105, 0.9);
+    border-color: rgba(99, 102, 241, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   INGREDIENTS
+   ============================================ */
+
+.ingredient-tag {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+    color: #34d399;
+    border-radius: 9999px;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    animation: ingredientIn 0.3s ease-out;
+}
+
+@keyframes ingredientIn {
+    0% { opacity: 0; transform: translateY(10px) scale(0.9); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.ingredient-tag button {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 50%;
+    font-size: 14px;
+    line-height: 1;
+    transition: all 0.2s;
+}
+
+.ingredient-tag button:hover {
+    background: rgba(239, 68, 68, 0.5);
+    color: white;
+}
+
+/* ============================================
+   RECIPE CARDS
+   ============================================ */
+
+.recipe-card {
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 1rem;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.recipe-card:hover {
+    background: rgba(71, 85, 105, 0.6);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.recipe-card.recommended {
+    border-color: rgba(16, 185, 129, 0.5);
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), transparent);
+}
+
+.recipe-card.selected {
+    border-color: #6366f1;
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), transparent);
+}
+
+.recipe-card .match-badge {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 9999px;
+}
+
+.recipe-card .ingredient-check {
+    font-size: 0.75rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 0.25rem;
+}
+
+.ingredient-check.have {
+    background: rgba(16, 185, 129, 0.3);
+    color: #6ee7b7;
+}
+
+.ingredient-check.missing {
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5;
+}
+
+/* ============================================
+   COOKING STEPS
+   ============================================ */
+
+.step-item {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    background: rgba(51, 65, 85, 0.5);
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.step-item.completed {
+    background: rgba(16, 185, 129, 0.1);
+    border-left-color: #10b981;
+}
+
+.step-item.completed .step-number {
+    background: #10b981;
+}
+
+.step-item.active {
+    background: linear-gradient(90deg, rgba(99, 102, 241, 0.2), transparent);
+    border-left-color: #6366f1;
+    transform: scale(1.02);
+}
+
+.step-item.active .step-number {
+    background: #6366f1;
+    animation: stepPulse 2s ease-in-out infinite;
+    will-change: box-shadow;
+}
+
+@keyframes stepPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+    50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+}
+
+.step-number {
+    width: 1.75rem;
+    height: 1.75rem;
+    min-width: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(71, 85, 105, 0.8);
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* ============================================
+   COOKING STAGES
+   ============================================ */
+
+.cooking-stage {
+    text-align: center;
+    padding: 0.625rem 0.25rem;
+    background: rgba(51, 65, 85, 0.8);
+    border-radius: 0.5rem;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.cooking-stage.active {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    transform: scale(1.05);
+    border-color: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+}
+
+.cooking-stage.warning {
+    animation: stageWarning 0.5s ease-in-out infinite;
+}
+
+@keyframes stageWarning {
+    0%, 100% { background: rgba(239, 68, 68, 0.8); }
+    50% { background: rgba(239, 68, 68, 0.5); }
+}
+
+/* ============================================
+   TIMER
+   ============================================ */
+
+.timer-running {
+    animation: timerGlow 1s ease-in-out infinite;
+}
+
+@keyframes timerGlow {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    50% { box-shadow: 0 0 20px 5px rgba(16, 185, 129, 0.2); }
+}
+
+.timer-warning {
+    color: #f59e0b !important;
+    animation: timerWarning 0.5s ease-in-out infinite;
+}
+
+@keyframes timerWarning {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.6; }
+}
+
+.timer-critical {
+    color: #ef4444 !important;
+    animation: timerCritical 0.3s ease-in-out infinite;
+}
+
+@keyframes timerCritical {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* ============================================
+   MODALS
+   ============================================ */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    animation: modalFadeIn 0.2s ease-out;
+}
+
+@keyframes modalFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.modal-content {
+    animation: modalSlideIn 0.3s ease-out;
+    max-height: 90vh;
+    overflow-y: auto;
+}
+
+@keyframes modalSlideIn {
+    from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ============================================
+   TOGGLE SWITCH
+   ============================================ */
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 48px;
+    height: 26px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: rgba(71, 85, 105, 0.8);
+    border-radius: 26px;
+    transition: 0.3s;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: 0.3s;
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.toggle-switch input:checked + .toggle-slider:before {
+    transform: translateX(22px);
+}
+
+/* ============================================
+   ACHIEVEMENTS
+   ============================================ */
+
+.achievement {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 9999px;
+    transition: all 0.2s;
+}
+
+.achievement.locked {
+    background: rgba(51, 65, 85, 0.8);
+    color: rgba(148, 163, 184, 0.6);
+    filter: grayscale(100%);
+}
+
+.achievement.unlocked {
+    animation: achievementUnlock 0.5s ease-out;
+}
+
+@keyframes achievementUnlock {
+    0% { transform: scale(1.5); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ============================================
+   VOICE INDICATOR
+   ============================================ */
+
+.voice-active {
+    animation: voicePulse 1s ease-in-out infinite;
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+}
+
+@keyframes voicePulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    50% { transform: scale(1.1); box-shadow: 0 0 20px 10px rgba(16, 185, 129, 0); }
+}
+
+.listening-active {
+    animation: listenPulse 0.8s ease-in-out infinite;
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+}
+
+@keyframes listenPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+/* ============================================
+   RANGE INPUT
+   ============================================ */
+
+input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: rgba(71, 85, 105, 0.8);
+    border-radius: 3px;
+    outline: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* ============================================
+   CONFETTI CELEBRATION
+   ============================================ */
+
+.celebration-overlay {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 200;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+    .quick-add-btn {
+        padding: 0.5rem;
+    }
+    
+    .action-btn {
+        padding: 0.625rem;
+        font-size: 0.75rem;
+    }
+    
+    .step-item {
+        padding: 0.625rem;
+    }
+    
+    .recipe-card {
+        padding: 0.75rem;
+    }
+}
+
+/* ============================================
+   FULLSCREEN MODE
+   ============================================ */
+
+.fullscreen-mode {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 50 !important;
+    background: #0f172a !important;
+    border-radius: 0 !important;
+    max-height: 100vh !important;
+    overflow-y: auto !important;
+}
+
+.fullscreen-mode .video-container {
+    max-height: 40vh;
+}
+
+/* ============================================
+   NOTIFICATIONS
+   ============================================ */
+
+.notification {
+    position: fixed;
+    top: 80px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    background: rgba(30, 41, 59, 0.95);
+    border-radius: 0.75rem;
+    border-left: 4px solid #6366f1;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    z-index: 60;
+    animation: notificationIn 0.3s ease-out;
+    max-width: 350px;
+}
+
+@keyframes notificationIn {
+    from { opacity: 0; transform: translateX(100px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.notification.success { border-left-color: #10b981; }
+.notification.warning { border-left-color: #f59e0b; }
+.notification.error { border-left-color: #ef4444; }
+
+/* ============================================
+   SHOPPING LIST
+   ============================================ */
+
+.shopping-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    background: rgba(51, 65, 85, 0.5);
+    border-radius: 0.375rem;
+    transition: all 0.2s;
+}
+
+.shopping-item.checked {
+    opacity: 0.5;
+    text-decoration: line-through;
+}
+
+.shopping-item input[type="checkbox"] {
+    accent-color: #6366f1;
+}
+
+/* ============================================
+   NUTRITIONAL INFO
+   ============================================ */
+
+.nutrition-bar {
+    height: 8px;
+    background: rgba(51, 65, 85, 0.8);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.nutrition-bar .fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.nutrition-bar .fill.protein { background: linear-gradient(90deg, #ef4444, #f97316); }
+.nutrition-bar .fill.carbs { background: linear-gradient(90deg, #eab308, #84cc16); }
+.nutrition-bar .fill.fat { background: linear-gradient(90deg, #3b82f6, #8b5cf6); }
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+
+@media print {
+    body {
+        background: white;
+        color: black;
+    }
+    
+    header, .modal-overlay, #cameraSection, button {
+        display: none !important;
+    }
+    
+    .recipe-card, .step-item {
+        background: #f3f4f6;
+        border: 1px solid #e5e7eb;
+    }
+}
